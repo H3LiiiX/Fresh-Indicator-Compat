@@ -1,0 +1,99 @@
+apply plugin: 'me.modmuss50.mod-publish-plugin'
+
+Map releaseTarget = (releaseTargets as List<Map>).find { target ->
+    target.projectPath == project.path
+} as Map
+if (releaseTarget == null) {
+    throw new GradleException("No release target is configured for ${project.path}")
+}
+
+def publishArtifactTask = tasks.named(releaseTarget.artifactTask as String)
+def confirmRelease = providers.gradleProperty('confirmRelease')
+        .map { value -> value.equalsIgnoreCase('true') }
+        .orElse(false)
+def releaseDryRun = confirmRelease.map { confirmed -> !confirmed }
+def modVersion = providers.gradleProperty('mod_version')
+def publicationVersion = modVersion.map { version -> "${version}-${releaseTarget.displayMinecraft}" }
+def releaseTitle = publicationVersion.map { version -> "${providers.gradleProperty('mod_name').get()} ${version}" }
+def curseForgeTitle = modVersion.map { version -> "${providers.gradleProperty('mod_name').get()} ${version} | ${releaseTarget.displayMinecraft}" }
+
+if (!rootProject.ext.has('releaseChangelogTextProvider')) {
+    def changelogFile = rootProject.layout.projectDirectory.file('CHANGELOG.md')
+    def dryRunChangelog = modVersion.map { version ->
+        "# Fresh Armor Bar ${version}\n\nDry-run preview only. Prepare CHANGELOG.md before a real release."
+    }
+    rootProject.ext.releaseChangelogTextProvider = rootProject.providers
+            .fileContents(changelogFile)
+            .asBytes
+            .map { bytes -> new String(bytes, 'UTF-8') }
+            .orElse(dryRunChangelog)
+}
+def releaseChangelog = rootProject.ext.releaseChangelogTextProvider
+
+if (!rootProject.ext.has('curseForgeChangelogTextProvider')) {
+    def curseForgeChangelogFile = rootProject.layout.projectDirectory.file('CHANGELOG_CURSEFORGE.html')
+    rootProject.ext.curseForgeChangelogTextProvider = rootProject.providers
+            .fileContents(curseForgeChangelogFile)
+            .asBytes
+            .map { bytes -> new String(bytes, 'UTF-8') }
+}
+def curseForgeChangelog = rootProject.ext.curseForgeChangelogTextProvider
+
+publishMods {
+    file = publishArtifactTask.flatMap { task -> task.archiveFile }
+    version = publicationVersion
+    displayName = releaseTitle
+    type = STABLE
+    modLoaders.add('fabric')
+    dryRun = releaseDryRun
+
+    modrinth {
+        projectId = providers.gradleProperty('modrinth_project_id')
+        accessToken = providers.environmentVariable('MODRINTH_TOKEN')
+        minecraftVersions.addAll(releaseTarget.minecraftVersionsModrinth as List<String>)
+        environment = CLIENT_ONLY
+        changelog = releaseTarget.primaryChangelogTarget ? releaseChangelog : ''
+        optional('modmenu')
+    }
+
+    curseforge {
+        projectId = providers.gradleProperty('curseforge_project_id')
+        accessToken = providers.environmentVariable('CURSEFORGE_TOKEN')
+        displayName = curseForgeTitle
+        minecraftVersions.addAll(releaseTarget.minecraftVersionsCurseForge as List<String>)
+        client = true
+        server = false
+        changelog = curseForgeChangelog
+        changelogType = 'html'
+        optional('modmenu')
+    }
+}
+
+tasks.named('publishModrinth').configure {
+    dependsOn(publishArtifactTask)
+}
+
+tasks.named('publishCurseforge').configure {
+    dependsOn(publishArtifactTask)
+}
+
+tasks.register('buildAllVersions') {
+    group = 'build'
+    description = 'Legacy per-version build alias. Prefer root verifyAllVersions for compatibility checks.'
+    dependsOn(tasks.named('build'))
+}
+
+tasks.register('buildAndCollect') {
+    group = 'build'
+    description = 'Legacy compatibility alias for buildAllVersions. Prefer root releaseBuild for publishing.'
+    dependsOn(tasks.named('buildAllVersions'))
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = project.archives_base_name
+            from(components.java)
+        }
+    }
+}

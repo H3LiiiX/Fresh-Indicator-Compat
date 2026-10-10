@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "fresh_indicator_compat",
+  "version": "${version}",
+  "name": "Fresh Indicator Compat",
+  "description": "Compatibility mod to link Fresh Armor Bar and Health Indicator Next.",
+  "authors": [
+    "Antigravity"
+  ],
+  "environment": "client",
+  "entrypoints": {
+  },
+  "mixins": [
+    "fresh_indicator_compat.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "26.3.x",
+    "health_indicator_next": "*",
+    "fresh-armor-bar": "*"
+  }
+}

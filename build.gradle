@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+}
+
+version = '1.0.0'
+group = 'com.freshindicatorcompat'
+
+repositories {
+    mavenCentral()
+    maven { url "https://libraries.minecraft.net" }
+    maven { url = "https://maven.fabricmc.net/" }
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+dependencies {
+    implementation name: 'FreshArmorBar-2.2-26.3'
+    implementation name: 'healthindicatornext-fabric-26.3-1.0.3'
+    
+    implementation 'net.fabricmc:fabric-loader:0.19.5'
+    implementation 'net.fabricmc:sponge-mixin:0.15.3+mixin.0.8.7'
+    compileOnly 'net.fabricmc:sponge-mixin:0.15.3+mixin.0.8.7'
+    
+    implementation files("libs/minecraft-merged-deobf-26.3.jar")
+    implementation "org.joml:joml:1.10.5"
+    compileOnly "org.jspecify:jspecify:1.0.0"
+    compileOnly "it.unimi.dsi:fastutil:8.5.15"
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+dependencies {
+    compileOnly 'com.mojang:datafixerupper:8.0.16'
+}

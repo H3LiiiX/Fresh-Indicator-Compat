@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.freshindicatorcompat.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+  ],
+  "client": [
+    "ArmorIndicatorRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
