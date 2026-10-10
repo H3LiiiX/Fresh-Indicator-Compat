@@ -1,6 +1,6 @@
 # Fresh Indicator Compat
 
-This mod acts as a bridge between `Fresh Armor Bar` and `Health Indicator Next`. 
+This mod acts as a bridge between [`Fresh Armor Bar`](https://modrinth.com/mod/fresh-armor-bar) and [`Health Indicator Next`](https://modrinth.com/mod/health-indicator-next). 
 
 ### How it Works
 1. It uses a Mixin (`ArmorIndicatorRendererMixin`) to inject into `Health Indicator Next`'s `ArmorIndicatorRenderer` which draws armor icons above players' heads.
